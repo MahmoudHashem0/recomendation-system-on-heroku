@@ -1,0 +1,45 @@
+@font-face {
+    font-family: myFirstFont;
+    src: url('/static/font/RhumbaScriptNF.ttf');
+}
+
+body {
+    /* background-image: url("{{url_for('../../static', filename='img/man-playing-saxophone.jpg')}}"); */
+    background-image: url('/static/img/man-playing-saxophone.jpg');
+    background-repeat: no-repeat;
+    background-attachment: fixed; 
+    background-size: 100% 100%;
+}
+
+div.home {
+    position: absolute;
+    left: 30%;
+    bottom: 30%;
+    width: 45%;
+}
+
+
+input[type=submit] {
+    width: 60%;
+    background-color: #202129;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+div.intro{
+    color: #202129;
+    font-family: myFirstFont;
+    font-size: xx-large;
+    font-weight: 600;
+    position: relative;
+    left: 11%;
+}
+
+p.welcome{
+    position: relative;
+    left: -27%;
+}
