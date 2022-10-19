@@ -7,4 +7,4 @@ WerkZeug
 numpy
 pandas
 scikit-learn
-pickle==4.0.0
+pickle>=3.8
