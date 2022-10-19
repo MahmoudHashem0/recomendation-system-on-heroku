@@ -7,4 +7,3 @@ WerkZeug
 numpy
 pandas
 scikit-learn
-pickle
