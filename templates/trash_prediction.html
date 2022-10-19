@@ -1,0 +1,26 @@
+<html>
+    <body>
+        <form action="/predict" method="post">
+            <label>target_user: </label><br>
+            <input name="target_user"><br><br>
+            <label>threshold: </label><br>
+            <input name="threshold"><br><br>
+            <label>n: </label><br>
+            <input name="n"><br><br>
+            <input type="submit" value="Predict", onclick="FbotonOn()">
+        </form>
+        <p id="status"></p>
+        {% for table in tables %}
+            {{ table|safe }}
+        {% endfor %}
+
+    </body>
+</html>
+
+<script type="text/javascript">
+    function FbotonOn() { 
+    
+        document.getElementById('status').innerHTML = "predicting ...";
+    
+    }
+</script>
