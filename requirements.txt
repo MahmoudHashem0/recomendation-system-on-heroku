@@ -1,3 +1,4 @@
+python-3.10.8
 Flask
 gunicorn
 itsdangerous
@@ -7,4 +8,4 @@ WerkZeug
 numpy
 pandas
 scikit-learn
-pickle>=4.0.0
+pickle
