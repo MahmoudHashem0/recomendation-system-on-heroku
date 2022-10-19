@@ -1,6 +1,6 @@
 from flask import Flask, redirect, url_for, request, render_template
 from model import RcmSys
-import pickle
+# import pickle
 
 app = Flask(__name__)
 
@@ -39,7 +39,7 @@ def predict():
     try:
         item_rank = rcmsys.predict(target_user, threshold, n)
     except NameError:
-        rcmsys = pickle.load(open('model.pkl','rb'))
+#         rcmsys = pickle.load(open('model.pkl','rb'))
         item_rank = rcmsys.predict(target_user, threshold, n)
 
     items = item_rank.head(10).reset_index()
