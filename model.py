@@ -1,11 +1,13 @@
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics.pairwise import cosine_similarity
 
 class RcmSys():
-    def __init__(self, popularity=True, genre= True):
+    def __init__(self, popularity=True, genre= True, year= True):
         self.popularity= popularity
         self.genre= genre
+        self.year= year
     
     def fit(self, file_path, item, user):
         self.df = pd.read_csv(file_path)
@@ -13,13 +15,16 @@ class RcmSys():
         self.user = user
         
         item_ = self.item + "_"
+
         self.df[item_] = self.df[self.item]
-        self.user_item_matrix = pd.pivot_table(data= self.df, index=self.user, columns=self.item, values = item_, aggfunc=pd.Series.count, fill_value=0 )
+        user_item_matrix = pd.pivot_table(data= self.df, index=self.user, columns=self.item, values = item_, aggfunc=pd.Series.count, fill_value=0 )
+        self.user_item_matrix = user_item_matrix.astype(np.int8)
 
         user_cosine_similarity = cosine_similarity(self.user_item_matrix) # Calculate similarity between users
         np.fill_diagonal(user_cosine_similarity, 0) # Set diagonal to zero not to affect our calculations.
-        self.user_cosine_similarity = pd.DataFrame(user_cosine_similarity)
+        self.user_cosine_similarity = pd.DataFrame(user_cosine_similarity, dtype=np.float16)
         
+        if self.year: self.__year_score(istrain=True)
         if self.popularity: self.__popularity_score(istrain=True)
         if self.genre: self.__genre_score(istrain=True)
 
@@ -35,8 +40,10 @@ class RcmSys():
         tracks_similar_not_target = similar_users_track_matrix.drop(columns=target_user_tracks, errors='ignore')
         
         interactions_score = tracks_similar_not_target.apply(lambda col:self.__weighted_avg(col, similar_users_scores))
+#         interactions_score = pd.DataFrame(interactions_score.sort_values(ascending=False), columns=['track_rank'])
+        # print(f"type(interactions_score): {type(interactions_score)}")
         interactions_score.name = "interactions_score"
-        
+        # print(f"type(interactions_score): {type(interactions_score)}")
         return interactions_score
 
 
@@ -48,7 +55,7 @@ class RcmSys():
             popularity_score.name = 'popularity_score'
             return popularity_score
 #             item_score = (item_score * (popularity_score.to_numpy() + 1))
-#             return item_score  
+#             return item_score
 
         
     def __genre_score(self, istrain, candidate_similar_items=None , target_user=None):
@@ -64,28 +71,49 @@ class RcmSys():
             return genre_score
 #             item_score['track_rank'] = item_score['track_rank'] * (item_score['genre_score']+1)
 #             return item_score
+    def __year_score(self, istrain, candidate_similar_items=None , target_user=None):
+        if istrain:
+            self.year_scaler = MinMaxScaler()
+            self.year_scaler.fit(self.df[['year']])
+            self.track_year = self.df[~ self.df.track_id.duplicated()][[self.item, 'year']].set_index(self.item)
+        else:
+            # candidate_items_genre
+            candidate_items_year = self.track_year.loc[candidate_similar_items]
+            year_score = self.year_scaler.transform(candidate_items_year)
+            year_score = pd.Series(year_score.squeeze(), name = "year_score", index=candidate_similar_items)
+            return year_score
     
 
     
     def predict(self, target_user, user_similarity_threshold, n):
-        interactions_score = self.__interactions_score(target_user, user_similarity_threshold, n)
+        interactions_score = self.__interactions_score(target_user, user_similarity_threshold, n)        
         candidate_similar_items = interactions_score.index
+
+        try:
+            popularity_score = self.__popularity_score(False, candidate_similar_items) if self.popularity else 0
+            genre_score = self.__genre_score(False, candidate_similar_items, target_user) if self.genre else 0
+            year_score = self.__year_score(False, candidate_similar_items, target_user) if self.year else 0
+        except:
+            return pd.DataFrame()
+
         
-        popularity_score = self.__popularity_score(False, candidate_similar_items) if self.popularity else 0
-        genre_score = self.__genre_score(False, candidate_similar_items, target_user) if self.genre else 0
+        total_score = interactions_score * (genre_score+1) * (popularity_score+1) * (year_score+1)
         
 
-        total_score = interactions_score * (genre_score+1) * (popularity_score+1)
-        total_score.name = "total_score"
+        total_score.name = 'total_score'
         item_score = pd.DataFrame(total_score)
-        
+
         try: item_score = pd.concat([popularity_score, item_score], axis=1)
         except: pass
         
         try: item_score = pd.concat([genre_score, item_score], axis=1)
         except: pass
 
+        try: item_score = pd.concat([year_score, item_score], axis=1)
+        except: pass
+
         item_score = pd.concat([interactions_score, item_score], axis=1)
+        
         return item_score.sort_values(by='total_score', ascending=False)
 
         
@@ -94,5 +122,3 @@ class RcmSys():
         denominator = weights[~ col.isnull()].sum()
         w_avg = numerator / denominator
         return w_avg
-
-

@@ -1,35 +1,34 @@
 <html>
+    
+    <head>
+        <script type="text/javascript">
+            function FbotonOn() { 
+            
+                document.getElementById('status').innerHTML = "training ...";
+            
+            }
+        </script>
+        <link rel="stylesheet" href="{{url_for('static', filename='css/training.css')}}">
+
+    </head>
+
     <body>
+        
+        <div class="home">
         <form action="/train" method="post">
-            <label>file_path: </label><br>
-            <input name="file_path"><br><br>
-            <label>item_col: </label><br>
-            <input name="item_col"><br><br>
-            <label>user_col: </label><br>
-            <input name="user_col"><br><br>
-            <label>popularity: </label><br>
-            <input name="popularity"><br><br>
-            <label>genre: </label><br>
-            <input name="genre"><br><br>
-            <input type="submit" value="Fit", onclick="FbotonOn()">
+            <input type="text" name="file_path" placeholder="File Path"><br><br>
+            <input type="text" name="item_col" placeholder="Item Column"><br><br>
+            <input type="text" name="user_col" placeholder="User Column"><br><br>
+            <input type="submit" value="Fit" class="fit" onclick="FbotonOn()">
         </form>
-
         <p id="status"></p>
-        {{ training_text }}
-
         {% if prediction=="True" %}
-            <form action="/prediction" method="post"> 
-                <p>press prediction button if you want to use your trained model</p>
-                <input type="submit" value="prediction" >
+            <form action="/prediction" method="post">
+                {{ training_text }}
+                <p class="message">Press prediction button if you want to use your trained model</p>
+                <input type="submit" value="go prediction stage">
             </form>
         {% endif %}
+        </div>
     </body>
 </html>
-
-<script type="text/javascript">
-    function FbotonOn() { 
-    
-        document.getElementById('status').innerHTML = "training ...";
-    
-    }
-</script>

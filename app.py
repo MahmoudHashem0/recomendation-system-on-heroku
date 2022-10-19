@@ -1,6 +1,7 @@
 from flask import Flask, redirect, url_for, request, render_template
 from model import RcmSys
-# import pickle
+from content_model import content_RcmSys
+import pickle
 
 app = Flask(__name__)
 
@@ -21,26 +22,31 @@ def train():
     file_path = request.form['file_path']
     item_col = request.form['item_col']
     user_col = request.form['user_col']
-    popularity = eval(request.form['popularity'])
-    genre = eval(request.form['genre'])
+    # popularity = eval(request.form['popularity'])
+    # genre = eval(request.form['genre'])
 
     global rcmsys
-    rcmsys = RcmSys(popularity, genre)
+    # model = RcmSys(popularity, genre)
+    rcmsys = RcmSys()
     rcmsys.fit(file_path, item_col, user_col)
 
     return render_template("training.html", training_text="training is done", prediction="True")
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    target_user = int(request.form['target_user'])
+    try:
+        target_user = int(request.form['target_user'])
+    except:
+        return render_template("prediction.html", message="Please write integer number")
+    
     threshold = 0 # int(request.form['threshold'])
     n = 10 # int(request.form['n'])
 
     try:
         item_rank = rcmsys.predict(target_user, threshold, n)
-    except NameError:
-#         rcmsys = pickle.load(open('model.pkl','rb'))
-        item_rank = rcmsys.predict(target_user, threshold, n)
+    except:
+        model = pickle.load(open('content_model.pkl','rb'))
+        item_rank = model.predict(target_user)
 
     items = item_rank.head(10).reset_index()
 
